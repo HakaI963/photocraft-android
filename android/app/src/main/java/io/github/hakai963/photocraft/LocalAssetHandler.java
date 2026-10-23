@@ -43,7 +43,13 @@ final class LocalAssetHandler implements WebViewAssetLoader.PathHandler {
             return notFound();
         }
 
-        String assetPath = "www/" + clean;
+        // WebViewAssetLoader strips the registered "/assets/" prefix, so the handler sees
+        // "www/index.html". Be tolerant of a leading "assets/" too: a wrong join here serves a
+        // "Not found." page even though the APK is complete.
+        if (clean.startsWith("assets/")) {
+            clean = clean.substring("assets/".length());
+        }
+        String assetPath = clean.startsWith("www/") ? clean : "www/" + clean;
         try {
             InputStream stream = context.getAssets().open(assetPath);
             String mime = mimeType(clean);

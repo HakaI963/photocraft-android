@@ -203,9 +203,12 @@
         }, 60000);
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', watchLoading, { once: true });
-    } else {
+    // The script is injected at the end of <body>, so the loading element already exists. Do
+    // not wait for DOMContentLoaded: Trunk's module uses top-level await, and a hung wasm init
+    // can hold that event forever, which would also disable the CPU fallback timer.
+    if (document.getElementById('photocraft_loading')) {
         watchLoading();
+    } else {
+        document.addEventListener('DOMContentLoaded', watchLoading, { once: true });
     }
 })();
