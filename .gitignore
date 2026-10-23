@@ -1,0 +1,23 @@
+# Rust / build output
+/target
+/dist
+/out
+
+# Android / Gradle
+/android/.gradle
+/android/build
+/android/app/build
+/android/local.properties
+/android/.idea
+*.iml
+*.hprof
+
+# OS / editor
+.DS_Store
+.idea
+.vscode
+*.swp
+
+# Local signing material (secrets belong in GitHub Actions, never here)
+*.jks
+*.keystore

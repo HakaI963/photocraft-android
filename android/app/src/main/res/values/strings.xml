@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PhotoCraft</string>
+    <string name="loading">Loading PhotoCraft…</string>
+    <string name="loading_hint">The Rust core is compiling in WebAssembly. First launch takes a few seconds.</string>
+    <string name="error_title">PhotoCraft could not start</string>
+    <string name="error_retry">Try again</string>
+    <string name="error_renderer">Android stopped the WebView renderer, usually because the image was too large for available memory. Reopen PhotoCraft and try a smaller document.</string>
+    <string name="exit_title">Exit PhotoCraft?</string>
+    <string name="exit_message">Unsaved work will be lost.</string>
+    <string name="exit_confirm">Exit</string>
+    <string name="cancel">Cancel</string>
+    <string name="file_picker_unavailable">No file picker is available on this device.</string>
+    <string name="save_failed">Could not save the export.</string>
+</resources>
