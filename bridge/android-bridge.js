@@ -21,6 +21,24 @@
     var CHUNK = 48 * 1024;
     var saving = Promise.resolve();
 
+    // PhotoCraft is a desktop workspace. On a phone-width viewport its toolbars and docks leave
+    // almost no canvas, so a first launch defaults to a smaller interface scale (a normal
+    // PhotoCraft preference, editable later in Preferences > Interface). Tablets keep 100%.
+    // Only the first run is touched: an existing preference is never overwritten.
+    try {
+        if (!localStorage.getItem('photocraft.preferences')) {
+            var width = window.innerWidth || 0;
+            var scale = width < 600 ? '75' : (width < 900 ? '80' : null);
+            if (scale) {
+                localStorage.setItem('photocraft.preferences', JSON.stringify({
+                    interface: { uiScale: scale }
+                }));
+            }
+        }
+    } catch (ignored) {
+        // Private mode or a disabled DOM storage: the app's default 100% still works.
+    }
+
     function log(message) {
         try {
             api.logError(String(message));
