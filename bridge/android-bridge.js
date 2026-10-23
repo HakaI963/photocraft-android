@@ -38,8 +38,8 @@
         return btoa(binary);
     }
 
-    function writeArrayBuffer(buffer, name) {
-        if (!api.beginDownload(name, 'application/octet-stream')) {
+    function writeArrayBuffer(buffer, name, mime) {
+        if (!api.beginDownload(name, mime || 'application/octet-stream')) {
             api.toast('Could not create the export file.');
             return Promise.resolve();
         }
@@ -65,7 +65,7 @@
                 };
                 reader.readAsArrayBuffer(blob);
             }).then(function (buffer) {
-                return writeArrayBuffer(buffer, name);
+                return writeArrayBuffer(buffer, name, blob.type);
             }).catch(function (error) {
                 api.abortDownload();
                 api.toast('Export failed: ' + error);

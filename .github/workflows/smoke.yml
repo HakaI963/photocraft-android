@@ -1,0 +1,68 @@
+name: Smoke test on Android emulator
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to test
+        required: true
+        default: android-v0.14.0
+
+permissions:
+  contents: read
+
+jobs:
+  emulator:
+    name: Install and launch the release APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Download the release APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          mkdir -p apk
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.apk' --dir apk
+          ls -lh apk
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot, install, launch, screenshot
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: >-
+            -no-snapshot -no-window -gpu swiftshader_indirect
+            -noaudio -no-boot-anim -camera-back none
+          script: |
+            set -x
+            adb install -r apk/*.apk
+            adb shell am start -W -n io.github.hakai963.photocraft/.MainActivity
+            sleep 120
+            adb shell dumpsys activity activities \
+              | grep -E 'mResumedActivity|topResumedActivity' || true
+            adb shell screencap -p /sdcard/photocraft.png
+            adb pull /sdcard/photocraft.png .
+            adb logcat -d \
+              | grep -iE 'photocraft|chromium|AndroidRuntime|FATAL|WebView' \
+              | tail -250 || true
+
+      - name: Upload the screenshot and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-smoke
+          path: |
+            photocraft.png
+            *.log
+          if-no-files-found: warn

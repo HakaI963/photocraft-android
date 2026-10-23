@@ -321,7 +321,18 @@ public final class MainActivity extends Activity {
         @SuppressWarnings("deprecation")
         @Override
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-            showError(description + " (" + errorCode + ")");
+            // The deprecated callback also fires for subresources on some WebViews. Only the
+            // editor page itself failing is worth replacing the whole screen.
+            if (failingUrl != null && failingUrl.startsWith(START_URL)) {
+                showError(description + " (" + errorCode + ")");
+            }
+        }
+
+        @Override
+        public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
+            if (request.isForMainFrame() && errorResponse.getStatusCode() >= 400) {
+                showError("HTTP " + errorResponse.getStatusCode() + " " + errorResponse.getReasonPhrase());
+            }
         }
 
         @Override
