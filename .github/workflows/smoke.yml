@@ -53,9 +53,8 @@ jobs:
               | grep -E 'mResumedActivity|topResumedActivity' || true
             adb shell screencap -p /sdcard/photocraft.png
             adb pull /sdcard/photocraft.png .
-            adb logcat -d \
-              | grep -iE 'photocraft|chromium|AndroidRuntime|FATAL|WebView' \
-              | tail -250 || true
+            adb logcat -d > logcat.txt
+            grep -iE 'photocraft|chromium|AndroidRuntime|FATAL|WebView' logcat.txt | tail -250 || true
 
       - name: Upload the screenshot and logs
         if: always()
@@ -64,5 +63,5 @@ jobs:
           name: emulator-smoke
           path: |
             photocraft.png
-            *.log
+            logcat.txt
           if-no-files-found: warn
