@@ -16,6 +16,10 @@
   <img alt="100% offline" src="https://img.shields.io/badge/network-100%25%20offline-4b9fd5">
 </p>
 
+<p align="center">
+  <img src="docs/screenshot-android.png" alt="PhotoCraft running on an Android emulator: the complete desktop-style editor with toolbars, color panel, layers panel and the PhotoCraft welcome screen" width="100%">
+</p>
+
 > **Unofficial Android port.** PhotoCraft is created by [Storytold / ArtCraft](https://github.com/storytold/photocraft). This repository packages the upstream editor for Android and is not affiliated with Adobe or with the upstream project. Upstream is MIT / Apache-2.0; see [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ---
@@ -76,9 +80,11 @@ PhotoCraft, not a rewrite.
 3. Allow installation from your browser/file manager when Android asks.
 4. Open **PhotoCraft**, then **File → Open** (or the Open button) and pick an image.
 
-Requirements: **Android 10 (API 29) or newer**, a 64-bit device, and a WebView with WebGL2
-(the preinstalled Android System WebView / Chrome). A tablet, foldable or DeX-style display is
-recommended: the editor is the desktop UI, and its panels are dense on a phone.
+Requirements: **Android 10 (API 29) or newer** and a current Android System WebView (the
+preinstalled Chromium WebView or Chrome). A tablet, foldable or DeX-style display is recommended:
+the editor is the desktop UI, and its panels are dense on a phone. On a phone-width first launch
+the port selects PhotoCraft's normal **75% interface scale** so the full workspace fits; change it
+any time in **Preferences → Interface → UI Scale**.
 
 The app is fully offline. It declares `INTERNET` only because Chromium expects the permission for
 an `https://` origin; every request that is not the local asset origin is answered with 403 by
@@ -146,6 +152,7 @@ releases you intend to keep.
 | `bridge/android-bridge.js` | Blob→MediaStore downloads, touch page rules, CPU fallback |
 | `scripts/assemble_web_assets.py` | Copies Trunk output into the APK and injects the bridge |
 | `scripts/make_icons.py` | Reproducible launcher/splash icons from the upstream icon |
+| `docs/screenshot-android.png` | Emulator screenshot from the smoke workflow |
 | `android/` | Java WebView shell, Gradle project, manifest, resources |
 | `.github/workflows/android.yml` | The only supported build path |
 | `PORTING.md` | Detailed port notes, upstream sync and limitations |

@@ -18,6 +18,7 @@ Requires Android 10 or newer. Fully offline; no account or network connection is
 - Camera RAW and HEIC import
 - Exports are saved to **Downloads/PhotoCraft/**
 - WebGL2 by default, automatic CPU fallback if the GPU path cannot start
+- Phone-width first launch uses PhotoCraft's 75% interface scale so the workspace fits; tablets keep 100%
 
 This is an unofficial port of [storytold/photocraft](https://github.com/storytold/photocraft)
 (PhotoCraft 0.14.0, commit `ff47388`), MIT / Apache-2.0. It is built entirely in GitHub Actions
