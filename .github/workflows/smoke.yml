@@ -46,14 +46,17 @@ jobs:
             -noaudio -no-boot-anim -camera-back none
           script: |
             set -x
-            adb install -r apk/*.apk
-            adb shell am start -W -n io.github.hakai963.photocraft/.MainActivity
-            sleep 120
-            adb shell dumpsys activity activities \
-              | grep -E 'mResumedActivity|topResumedActivity' || true
-            adb shell screencap -p /sdcard/photocraft.png
-            adb pull /sdcard/photocraft.png .
-            adb logcat -d > logcat.txt
+            adb install -r apk/*.apk || true
+            adb shell am start -W -n io.github.hakai963.photocraft/.MainActivity || true
+            sleep 150
+            adb shell dumpsys activity activities > dumpsys.txt || true
+            grep -E 'mResumedActivity|topResumedActivity' dumpsys.txt || true
+            adb shell screencap -p /sdcard/photocraft-150.png || true
+            adb pull /sdcard/photocraft-150.png . || true
+            sleep 45
+            adb shell screencap -p /sdcard/photocraft-195.png || true
+            adb pull /sdcard/photocraft-195.png . || true
+            adb logcat -d > logcat.txt || true
             grep -iE 'photocraft|chromium|AndroidRuntime|FATAL|WebView' logcat.txt | tail -250 || true
 
       - name: Upload the screenshot and logs
@@ -62,6 +65,7 @@ jobs:
         with:
           name: emulator-smoke
           path: |
-            photocraft.png
+            photocraft-*.png
             logcat.txt
+            dumpsys.txt
           if-no-files-found: warn
