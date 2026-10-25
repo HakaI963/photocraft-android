@@ -53,10 +53,7 @@ jobs:
             adb shell am start -W -n io.github.hakai963.photocraft/.MainActivity || true
             sleep 150
             adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true
-            if adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q "isn.t responding"; then
-              adb shell input tap 540 1550 || true
-              sleep 3
-            fi
+            if adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q "isn.t responding"; then adb shell input tap 540 1550 || true; sleep 3; fi
             adb shell dumpsys activity activities > dumpsys.txt || true
             grep -E 'mResumedActivity|topResumedActivity' dumpsys.txt || true
             adb shell screencap -p /sdcard/photocraft-150.png || true
