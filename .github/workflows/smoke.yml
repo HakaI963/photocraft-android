@@ -96,7 +96,7 @@ jobs:
             adb pull /sdcard/photocraft-picker.png . || true
             # The picker's first recent row is one of the screenshots taken above. Selecting it
             # exercises the content:// URI -> FileReader -> Rust PNG decode -> canvas path.
-            adb shell input tap 350 520 || true
+            adb shell input tap 400 620 || true
             sleep 20
             adb shell screencap -p /sdcard/photocraft-document.png || true
             adb pull /sdcard/photocraft-document.png . || true

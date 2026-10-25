@@ -2044,6 +2044,16 @@ fn ensure_gpu(app: &mut PhotocraftApp, ctx: &egui::Context, idx: usize, visible:
     {
         log::info!("{e}; using the CPU compositor");
     }
+    // Some WebGL2 drivers (Android WebView's SwiftShader included) reject the GPU compositor's
+    // shader pipeline but keep the UI running. The wgpu canvas then stays blank while the CPU
+    // compositor paints textures nothing can show. Drop the GPU canvas so the document is drawn
+    // with egui textures at once, instead of leaving an empty canvas until the next launch.
+    if let Some(e) = &r.fallback
+        && e.contains("couldn't build the compositor")
+    {
+        crate::gpu_status::fall_back(app, &photocraft_gpu::Fault::Error(e.clone()));
+        return false;
+    }
     if r.kind != crate::gpu_canvas::REFRESH_DEFERRED {
         app.perf.record_refresh(&r);
     }
