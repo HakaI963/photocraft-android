@@ -57,6 +57,9 @@ pub fn start() {
         };
         let q = query();
         let force_cpu = q.contains("cpu");
+        // The Android shell appends `mobile`: the touch-first chrome replaces the desktop rails.
+        // A desktop browser opening the same build keeps the upstream workspace.
+        photocraft_ui_egui::mobile_ui::set_enabled(q.contains("mobile"));
         let mut options = eframe::WebOptions::default();
         photocraft_ui_egui::gpu_canvas::use_adapter_limits(&mut options.wgpu_options.wgpu_setup);
         if q.contains("webgl")

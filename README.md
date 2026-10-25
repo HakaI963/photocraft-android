@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <b>The same PhotoCraft Rust core and the same egui editor, running on Android.</b><br>
-  Layers, masks, adjustment layers, layer styles, type, vectors, brushes, RAW/HEIC import and real PSD files — offline, on a phone or tablet.
+  <b>The same PhotoCraft Rust core and editor, with a touch-first Android chrome.</b><br>
+  Large tool buttons, full-width Layers/Color/History sheets and a command menu — plus layers, masks, type, vectors, brushes, RAW/HEIC import and real PSD files, offline on a phone or tablet.
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshot-android.png" alt="PhotoCraft running on an Android emulator: the complete desktop-style editor with toolbars, color panel, layers panel and the PhotoCraft welcome screen" width="100%">
+  <img src="docs/screenshot-android.png" alt="PhotoCraft running on an Android emulator with its touch-first top bar, bottom tool strip and document canvas" width="100%">
 </p>
 
 > **Unofficial Android port.** PhotoCraft is created by [Storytold / ArtCraft](https://github.com/storytold/photocraft). This repository packages the upstream editor for Android and is not affiliated with Adobe or with the upstream project. Upstream is MIT / Apache-2.0; see [ATTRIBUTION.md](ATTRIBUTION.md).
@@ -28,8 +28,8 @@
 
 This is **not** a reimplementation or a “PhotoCraft-inspired” app. The APK contains the actual
 upstream `photocraft-web` build: the same Rust image engine, the same document model, the same
-PSD/RAW/HEIC codecs, and the same egui interface. The Android layer only supplies what a browser
-cannot:
+PSD/RAW/HEIC codecs and the same editor canvas. The Android layer supplies the WebView runtime,
+file picker, MediaStore exports and a touch-first layout around that editor:
 
 | Android layer | What it does |
 |---|---|
@@ -37,6 +37,7 @@ cannot:
 | **SAF file picker** | File → Open gets Android's document picker. PSD, PSDT, XCF, KRA, RAW, HEIC and every other format stay selectable (`*/*`; the editor validates bytes). |
 | **MediaStore bridge** | The web build saves by creating a `blob:` download. A small JS bridge streams that blob to `Downloads/PhotoCraft/` in base64 chunks. No storage permission on Android 10+. |
 | **Lifecycle / recovery** | Keeps the screen awake while editing, handles insets and rotation without reloading, reports JS errors, and recovers from a WebView renderer crash instead of closing. |
+| **Touch-first chrome** | `?mobile` swaps the desktop rails for a 54 pt top bar, a large bottom tool strip, a brush-size quick control, and full-width panel/menu sheets. The editor, canvas and commands are still upstream. |
 | **CPU fallback** | Starts with WebGL2 (`?webgl`). If the device's WebGL context cannot start, the bridge reloads once with PhotoCraft's CPU canvas (`?cpu`). |
 
 Everything that edits pixels runs in the Rust core compiled to WebAssembly. There is **no NDK
@@ -63,6 +64,7 @@ build, no JNI image pipeline, and no second implementation to drift from upstrea
   ┌────────────────────────────────────────────────────────────┐
   │  MainActivity (Java)                                       │
   │    ├─ WebView ── local https asset origin ── Rust core     │
+  │    ├─ touch-first chrome (mobile_ui.rs) + brush quick bar   │
   │    ├─ SAF picker ── File → Open / Place                      │
   │    ├─ DownloadBridge ── MediaStore Downloads/PhotoCraft     │
   │    └─ error screen / renderer recovery / back handling      │
@@ -78,13 +80,18 @@ PhotoCraft, not a rewrite.
 1. Open **[Releases](https://github.com/HakaI963/photocraft-android/releases)**.
 2. Download `PhotoCraft-Android-<version>.apk` (and `SHA256SUMS.txt` if you want to verify it).
 3. Allow installation from your browser/file manager when Android asks.
-4. Open **PhotoCraft**, then **File → Open** (or the Open button) and pick an image.
+4. Open **PhotoCraft**, then **Open** in the top-right menu (or the Open button on the welcome
+   screen) and pick an image.
 
 Requirements: **Android 10 (API 29) or newer** and a current Android System WebView (the
-preinstalled Chromium WebView or Chrome). A tablet, foldable or DeX-style display is recommended:
-the editor is the desktop UI, and its panels are dense on a phone. On a phone-width first launch
-the port selects PhotoCraft's normal **75% interface scale** so the full workspace fits; change it
-any time in **Preferences → Interface → UI Scale**.
+preinstalled Chromium WebView or Chrome).
+
+The Android build defaults to **100% interface scale** and uses a touch-first layout: a large top
+bar for menu, undo/redo and panels; a bottom strip for the main tools; full-width, resizable
+**Layers / Color / History / Properties / Brushes / Navigator** sheets; and a command menu.
+A brush-size stepper sits above the tool strip while a painting tool is active. The layout works
+on phones, tablets and foldables. UI scale remains adjustable in **Preferences → Interface**; old
+builds that shrank the desktop workspace to 75/80% are migrated to 100% once.
 
 The app is fully offline. It declares `INTERNET` only because Chromium expects the permission for
 an `https://` origin; every request that is not the local asset origin is answered with 403 by
@@ -92,7 +99,8 @@ an `https://` origin; every request that is not the local asset origin is answer
 
 ## Features
 
-Same as upstream PhotoCraft 0.14.0, because it is the same build:
+The engine, codecs and editor are upstream PhotoCraft 0.14.0; the Android chrome is the only UI
+difference:
 
 - Layers, groups, masks, clipping masks, blend modes, opacity and lock flags
 - Adjustment layers (Curves, Levels, Hue/Saturation, Vibrance, Color Balance, …)
@@ -103,6 +111,8 @@ Same as upstream PhotoCraft 0.14.0, because it is the same build:
   Affinity files, and camera RAW / HEIC import (the upstream web build's codec set)
 - Undo history, presets, document tabs, recovery-friendly WebView storage
 - 100% local processing — no upload, account, subscription or telemetry
+- Touch-first Android chrome with large targets, panel sheets, a command menu and a mobile New
+  Document sheet (the editor itself remains the upstream build)
 
 See the [upstream README](https://github.com/storytold/photocraft#features) for the full,
 current feature matrix.
@@ -149,7 +159,8 @@ releases you intend to keep.
 |---|---|
 | `crates/`, `apps/`, `assets/`, `contributors/` | Vendored upstream PhotoCraft 0.14.0 (commit `ff47388`) |
 | `apps/photocraft-web/` | Upstream browser runner; `index.html` selects the `android-web` profile |
-| `bridge/android-bridge.js` | Blob→MediaStore downloads, touch page rules, CPU fallback |
+| `crates/ui-egui/src/mobile_ui.rs` | Android touch-first chrome; desktop builds never enable it |
+| `bridge/android-bridge.js` | Blob→MediaStore downloads, 100% scale migration, touch page rules, CPU fallback |
 | `scripts/assemble_web_assets.py` | Copies Trunk output into the APK and injects the bridge |
 | `scripts/make_icons.py` | Reproducible launcher/splash icons from the upstream icon |
 | `docs/screenshot-android.png` | Emulator screenshot from the smoke workflow |
@@ -161,8 +172,10 @@ releases you intend to keep.
 
 These come from the upstream **web** target, not from the Android shell:
 
-- The UI is desktop-first; touch works (the web build has pointer/touch handling) but panels are
-  small on a phone. Use a tablet for serious editing.
+- The Android build replaces the desktop chrome with a touch layout, but a few deep dialogs
+  (Preferences, some filter/dialog editors) still use the desktop two-column sizing. They are
+  usable on a phone but roomier on a tablet. The mobile **New Document** sheet is provided for the
+  most common creation path.
 - Very large documents are limited by the WebView's memory. The manifest requests `largeHeap`, and
   the shell reports a renderer crash instead of dying silently, but WASM still needs the pixels in
   memory.

@@ -144,6 +144,7 @@ pub mod menu_catalog;
 pub mod menu_keys;
 pub mod menu_nav;
 pub mod menus;
+pub mod mobile_ui;
 pub mod monitor_status;
 pub mod move_box;
 pub mod move_distance;
@@ -2421,22 +2422,28 @@ impl eframe::App for PhotocraftApp {
         if chrome {
             self.ui.panels.full_screen_chrome = false;
         }
-        // In Full Screen Mode, Tab shows the menu bar, options bar, toolbar and dock (#6760).
-        let tabbed_in = !chrome && self.ui.panels.full_screen_chrome;
-        if (chrome || tabbed_in) && self.ui.panels.menu_bar {
-            panels::title_bar(self, ui);
-        }
-        if (chrome && self.ui.panels.options_bar) || tabbed_in {
-            panels::options_bar(self, ui);
-        }
-        if chrome && self.ui.panels.status_bar {
-            panels::status_bar(self, ui);
-        }
-        if (chrome && self.ui.panels.toolbar) || tabbed_in {
-            panels::toolbar(self, ui);
-        }
-        if (chrome && self.ui.panels.dock) || tabbed_in {
-            panels::right_dock(self, ui);
+        if crate::mobile_ui::enabled() {
+            // The Android WebView gets a touch-first chrome: large top/bottom bars and full-width
+            // sheets for panels and commands, instead of the desktop rails and dock.
+            crate::mobile_ui::chrome(self, ui);
+        } else {
+            // In Full Screen Mode, Tab shows the menu bar, options bar, toolbar and dock (#6760).
+            let tabbed_in = !chrome && self.ui.panels.full_screen_chrome;
+            if (chrome || tabbed_in) && self.ui.panels.menu_bar {
+                panels::title_bar(self, ui);
+            }
+            if (chrome && self.ui.panels.options_bar) || tabbed_in {
+                panels::options_bar(self, ui);
+            }
+            if chrome && self.ui.panels.status_bar {
+                panels::status_bar(self, ui);
+            }
+            if (chrome && self.ui.panels.toolbar) || tabbed_in {
+                panels::toolbar(self, ui);
+            }
+            if (chrome && self.ui.panels.dock) || tabbed_in {
+                panels::right_dock(self, ui);
+            }
         }
         let t = theme::Tokens::get(&ctx);
         let backdrop = if chrome { prefs_ui::pasteboard_color(self).unwrap_or(t.canvas) } else { egui::Color32::BLACK };

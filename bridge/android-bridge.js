@@ -21,22 +21,25 @@
     var CHUNK = 48 * 1024;
     var saving = Promise.resolve();
 
-    // PhotoCraft is a desktop workspace. On a phone-width viewport its toolbars and docks leave
-    // almost no canvas, so a first launch defaults to a smaller interface scale (a normal
-    // PhotoCraft preference, editable later in Preferences > Interface). Tablets keep 100%.
-    // Only the first run is touched: an existing preference is never overwritten.
+    // Earlier Android builds shrank the desktop UI to 75/80% to make the dock fit. The mobile
+    // chrome now uses large touch targets instead, so migrate those old first-run defaults back
+    // to PhotoCraft's normal 100% once. After that the preference is the user's again.
     try {
-        if (!localStorage.getItem('photocraft.preferences')) {
-            var width = window.innerWidth || 0;
-            var scale = width < 600 ? '75' : (width < 900 ? '80' : null);
-            if (scale) {
-                localStorage.setItem('photocraft.preferences', JSON.stringify({
-                    interface: { uiScale: scale }
-                }));
+        var scaleMarker = 'photocraft.android.mobileScale';
+        if (!localStorage.getItem(scaleMarker)) {
+            var stored = localStorage.getItem('photocraft.preferences');
+            if (stored) {
+                var prefs = JSON.parse(stored);
+                var iface = prefs && prefs.interface;
+                if (iface && (iface.uiScale === '75' || iface.uiScale === '80')) {
+                    iface.uiScale = '100';
+                    localStorage.setItem('photocraft.preferences', JSON.stringify(prefs));
+                }
             }
+            localStorage.setItem(scaleMarker, '1');
         }
     } catch (ignored) {
-        // Private mode or a disabled DOM storage: the app's default 100% still works.
+        // Private mode or disabled DOM storage: the app's default 100% still works.
     }
 
     function log(message) {
@@ -197,7 +200,8 @@
             return;
         }
         cpuFallbackDone = true;
-        location.replace(location.pathname + '?cpu');
+        var mobile = location.search.indexOf('mobile') >= 0 ? '&mobile' : '';
+        location.replace(location.pathname + '?cpu' + mobile);
     }
 
     function watchLoading() {

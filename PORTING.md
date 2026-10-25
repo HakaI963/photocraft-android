@@ -17,14 +17,24 @@ git fetch upstream
 # re-apply the three upstream edits below, then build in Actions
 ```
 
-The only upstream-file edits are:
+The port keeps the upstream core and editor, and changes only the shell and the chrome around
+the canvas:
 
 1. `Cargo.toml` — add the `android-web` profile (inherits `release`, `opt-level = 2`,
    `lto = false`, `codegen-units = 16`, `strip = "debuginfo"`).
 2. `apps/photocraft-web/index.html` — select `data-cargo-profile="android-web"`, drop the
    `--converge` wasm-opt flag, add `viewport-fit=cover` and `color-scheme: dark`.
-3. Nothing else. The Android bridge is injected into the built `index.html`; no Rust source is
-   patched.
+3. `apps/photocraft-web/src/web.rs` — read `?mobile` and enable the touch chrome before starting
+   the eframe app.
+4. `crates/ui-egui/src/mobile_ui.rs` (new) and the small branch in `lib.rs` — the Android-only
+   top bar, bottom tool strip, brush-size stepper, panel sheets, command menu, tool picker and
+   New Document sheet. Desktop builds never set the flag, so this module draws nothing there.
+5. `crates/ui-egui/src/canvas.rs` — the welcome screen's **New document** button opens the mobile
+   New Document sheet instead of the 790 pt desktop dialog.
+
+Everything behind those entry points — the engine, document model, canvas, tools, panels, filters
+and dialogs — is upstream code. The bridge and Android shell are port-owned and injected during
+the build.
 
 ## Why WebAssembly instead of `cargo-ndk`
 
@@ -82,14 +92,41 @@ page asks for multiple files. PhotoCraft's accepted list includes extensions (`.
 reach them, and the engine still validates the bytes. The URI grant is read-only and does not
 persist beyond the page's read.
 
+### Touch-first Android chrome
+
+The page is loaded with `?webgl&mobile`, so the web shell enables `mobile_ui` in addition to the
+WebGL2 backend. On a phone-width screen that replaces the desktop rails with:
+
+- a 54 pt top bar: hamburger menu, document title, color swatch, Undo, Redo and Panels;
+- the upstream options bar underneath it (horizontally scrollable, so every tool setting remains
+  reachable);
+- a large bottom strip with Tools, Move, Brush, Eraser, Hand, Zoom, Type, Crop, Marquee and Lasso;
+- a 50 pt Brush Size stepper above that strip while a brush-like tool is active;
+- full-width, resizable panel sheets (Layers, Color, History, Properties, Brushes, Navigator,
+  Character) with large group chips and 38–46 pt tabs;
+- a modal command menu with New / Open / Save / Export quick actions and grouped Edit, Select,
+  Image, Layer and View items;
+- a three-column tool picker containing every upstream tool;
+- a phone-sized New Document sheet (presets, name, width/height, background) that calls the same
+  `file.new` command as the desktop dialog.
+
+All actions go through the normal `menus::invoke` / `app.run` paths, so they get the same
+enablement rules, history, dialogs and status messages as the desktop. The layout uses egui
+points; on Android a CSS pixel is a dp, so the 44–52 pt controls meet the usual touch-target size.
+The desktop web build is unchanged because it never receives `?mobile`.
+
+The browser first-launch shim that used to set the interface scale to 75/80% has been replaced by
+a one-time migration back to 100%. The scale preference is still editable in Preferences.
+
 ### Rendering and touch
 
-The page is loaded with `?webgl` so wgpu uses the WebGL2 backend, which is the most widely
-available WebView path. If initialization fails, `android-bridge.js` watches the page's own error
-text and reloads once with `?cpu` (PhotoCraft's CPU canvas). The bridge sets `touch-action: none`
+The page is loaded with `?webgl&mobile`; wgpu uses the WebGL2 backend, the most widely available
+WebView path. If initialization fails, `android-bridge.js` watches the page's own error text and
+reloads once with `?cpu&mobile` (PhotoCraft's CPU canvas). The bridge sets `touch-action: none`
 and disables context menus so browser gestures do not fight the editor; egui receives the pointer
-events. The upstream web shell already has pen pressure/tilt support and a touch-twin filter for
-tap events.
+events. Two-finger pinch/twist reach the upstream canvas gesture code (Enhanced Controls › Enable
+Gestures is on by default), and the Hand/Zoom tools cover one-finger navigation. The upstream web
+shell also has pen pressure/tilt support and a touch-twin filter for tap events.
 
 ### Insets, rotation and lifecycle
 
@@ -124,8 +161,12 @@ re-enable wasm-opt convergence; both cost CI minutes but do not change behaviour
 
 There is no local SDK/NDK build by design. After an Actions run:
 
-- [ ] APK installs on Android 10+ and launches past the splash.
-- [ ] `File → Open` shows Android's picker and opens a JPEG and a PSD.
+- [ ] APK installs on Android 10+ and launches past the splash into the mobile top/bottom bars.
+- [ ] Menu → Open shows Android's picker and opens a JPEG and a PSD.
+- [ ] Menu → New opens the mobile New Document sheet and creates a document.
+- [ ] Panels opens the Layers sheet; Color opens the Color sheet; both scroll and resize.
+- [ ] Tools opens the full tool picker; Move/Brush/Eraser/Hand/Zoom switch tools.
+- [ ] The Brush Size stepper changes size without leaving the canvas.
 - [ ] A brush stroke and an adjustment layer render at a reasonable frame rate.
 - [ ] `File → Save` / export writes to `Downloads/PhotoCraft/` and the toast appears.
 - [ ] Rotating the device does not reload the page or lose the document.
@@ -139,6 +180,9 @@ There is no local SDK/NDK build by design. After an Actions run:
   apps. Those are upstream web limitations, not removed here.
 - `rfd`'s web picker returns file contents, so File → Open works, but a folder picker is not
   representable (`FileDialogRequest::Folder` returns `None` upstream).
+- The touch chrome covers the main workspace, panels, tools and commands. A few deep editors
+  (Preferences, some filter dialogs) still use the upstream desktop two-column sizing; the mobile
+  New Document sheet replaces the widest of those.
 - Saving does not prompt for a location; exports go to `Downloads/PhotoCraft/`. This mirrors the
   browser's download behaviour and is intentional.
 - A very large document can exhaust the WebView renderer; the shell recovers but cannot prevent

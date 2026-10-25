@@ -3222,8 +3222,12 @@ fn start_screen(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                 open_clicked = crate::widgets::secondary_button(ui, &open_label, button_width).clicked();
             }
             if new_clicked {
-                let fields = app.new_document_fields();
-                app.ui.open_dialog(crate::state::DialogKind::NewDocument, fields);
+                if crate::mobile_ui::enabled() {
+                    crate::mobile_ui::request_new_document(ui.ctx());
+                } else {
+                    let fields = app.new_document_fields();
+                    app.ui.open_dialog(crate::state::DialogKind::NewDocument, fields);
+                }
             }
             if open_clicked {
                 let _ = app.open_dialog_file();

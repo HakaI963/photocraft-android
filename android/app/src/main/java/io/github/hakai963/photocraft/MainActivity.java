@@ -59,7 +59,7 @@ public final class MainActivity extends Activity {
     private static final String TAG = "PhotoCraft";
     private static final String ASSET_HOST = "appassets.androidplatform.net";
     private static final String START_URL =
-            "https://" + ASSET_HOST + "/assets/www/index.html?webgl";
+            "https://" + ASSET_HOST + "/assets/www/index.html?webgl&mobile";
     private static final int REQUEST_FILE = 4001;
 
     private WebView webView;
