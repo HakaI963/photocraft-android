@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshot-android.png" alt="PhotoCraft running on an Android emulator with its touch-first top bar, bottom tool strip and document canvas" width="100%">
+  <img src="docs/screenshot-android.png" alt="PhotoCraft running on an Android emulator: touch-first top bar, brush-size control, painted document and bottom tool strip" width="100%">
 </p>
 
 > **Unofficial Android port.** PhotoCraft is created by [Storytold / ArtCraft](https://github.com/storytold/photocraft). This repository packages the upstream editor for Android and is not affiliated with Adobe or with the upstream project. Upstream is MIT / Apache-2.0; see [ATTRIBUTION.md](ATTRIBUTION.md).
