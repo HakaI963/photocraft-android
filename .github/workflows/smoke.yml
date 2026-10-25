@@ -72,6 +72,14 @@ jobs:
             sleep 15
             adb shell screencap -p /sdcard/photocraft-new-document.png || true
             adb pull /sdcard/photocraft-new-document.png . || true
+            # Paint a short zigzag on the white canvas: pointer input and the CPU compositor.
+            adb shell input swipe 260 1150 360 1400 500 || true
+            adb shell input swipe 360 1400 460 1050 500 || true
+            adb shell input swipe 460 1050 560 1400 500 || true
+            adb shell input swipe 560 1400 660 1150 500 || true
+            sleep 4
+            adb shell screencap -p /sdcard/photocraft-stroke.png || true
+            adb pull /sdcard/photocraft-stroke.png . || true
             # The Panels button at the top-right opens the Layers sheet.
             adb shell input tap 999 134 || true
             sleep 3
