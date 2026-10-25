@@ -784,7 +784,9 @@ fn group_label(group: Group) -> &'static str {
 
 fn menu_sheet(app: &mut PhotocraftApp, ctx: &egui::Context, t: &Tokens) {
     let width = (ctx.content_rect().width() - 32.0).clamp(260.0, 480.0);
-    let max_h = (ctx.content_rect().height() - 80.0).max(300.0);
+    // A modal is auto-sized, so an unbounded ScrollArea collapses to its floor. Reserve a real
+    // viewport for the command list; the modal is centered over the canvas.
+    let scroll_h = (ctx.viewport_rect().height() - 340.0).clamp(120.0, 560.0);
     let mut close = false;
     let mut new_doc = false;
     let mut action: Option<String> = None;
@@ -859,78 +861,85 @@ fn menu_sheet(app: &mut PhotocraftApp, ctx: &egui::Context, t: &Tokens) {
                 }
             });
 
-        egui::ScrollArea::vertical()
-            .id_salt("mobile-menu-scroll")
-            .max_height((max_h - 300.0).max(80.0))
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                if app.session.documents().len() > 1 {
-                    ui.add_space(8.0);
-                    ui.label(
-                        RichText::new(tl!("Documents"))
-                            .font(theme::semibold(12.5))
-                            .color(t.text_faint),
-                    );
-                    ui.add_space(2.0);
-                    let active = app.session.active_index();
-                    let docs: Vec<(usize, String)> = app
-                        .session
-                        .documents()
-                        .iter()
-                        .enumerate()
-                        .map(|(i, d)| (i, d.doc.name.clone()))
-                        .collect();
-                    for (i, name) in docs {
-                        let selected = active == Some(i);
-                        let resp = ui.add_sized(
-                            [ui.available_width(), 44.0],
-                            egui::Button::new(RichText::new(name).size(14.0))
-                                .selected(selected)
-                                .truncate(),
-                        );
-                        if resp.clicked() {
-                            app.session.set_active(i);
-                            close = true;
-                        }
-                    }
-                }
-                for section in MENU_SECTIONS {
-                    ui.add_space(10.0);
-                    ui.label(
-                        RichText::new(tl!(section.title))
-                            .font(theme::semibold(12.5))
-                            .color(t.text_faint),
-                    );
-                    ui.add_space(2.0);
-                    for &(label, id) in section.items {
-                        let enabled = menus::is_enabled(app, id);
-                        let w = ui.available_width();
-                        let resp = ui
-                            .add_enabled_ui(enabled, |ui| {
-                                ui.add_sized(
-                                    [w, 48.0],
-                                    egui::Button::new(RichText::new(tl!(label)).size(15.0))
+        ui.allocate_ui_with_layout(
+            vec2(width, scroll_h),
+            egui::Layout::top_down(egui::Align::Min),
+            |ui| {
+                ui.set_width(width);
+                egui::ScrollArea::vertical()
+                    .id_salt("mobile-menu-scroll")
+                    .max_height(scroll_h)
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        if app.session.documents().len() > 1 {
+                            ui.add_space(8.0);
+                            ui.label(
+                                RichText::new(tl!("Documents"))
+                                    .font(theme::semibold(12.5))
+                                    .color(t.text_faint),
+                            );
+                            ui.add_space(2.0);
+                            let active = app.session.active_index();
+                            let docs: Vec<(usize, String)> = app
+                                .session
+                                .documents()
+                                .iter()
+                                .enumerate()
+                                .map(|(i, d)| (i, d.doc.name.clone()))
+                                .collect();
+                            for (i, name) in docs {
+                                let selected = active == Some(i);
+                                let resp = ui.add_sized(
+                                    [ui.available_width(), 44.0],
+                                    egui::Button::new(RichText::new(name).size(14.0))
+                                        .selected(selected)
                                         .truncate(),
-                                )
-                            })
-                            .inner;
-                        if enabled && resp.clicked() {
-                            if id == "file.new" {
-                                new_doc = true;
-                            } else {
-                                action = Some(id.to_string());
+                                );
+                                if resp.clicked() {
+                                    app.session.set_active(i);
+                                    close = true;
+                                }
                             }
                         }
-                    }
-                }
-                ui.add_space(12.0);
-                ui.label(
-                    RichText::new(tl!("PhotoCraft for Android"))
-                        .size(11.5)
-                        .color(t.text_faint),
-                );
-                ui.add_space(6.0);
-            });
+                        for section in MENU_SECTIONS {
+                            ui.add_space(10.0);
+                            ui.label(
+                                RichText::new(tl!(section.title))
+                                    .font(theme::semibold(12.5))
+                                    .color(t.text_faint),
+                            );
+                            ui.add_space(2.0);
+                            for &(label, id) in section.items {
+                                let enabled = menus::is_enabled(app, id);
+                                let w = ui.available_width();
+                                let resp = ui
+                                    .add_enabled_ui(enabled, |ui| {
+                                        ui.add_sized(
+                                            [w, 48.0],
+                                            egui::Button::new(RichText::new(tl!(label)).size(15.0))
+                                                .truncate(),
+                                        )
+                                    })
+                                    .inner;
+                                if enabled && resp.clicked() {
+                                    if id == "file.new" {
+                                        new_doc = true;
+                                    } else {
+                                        action = Some(id.to_string());
+                                    }
+                                }
+                            }
+                        }
+                        ui.add_space(12.0);
+                        ui.label(
+                            RichText::new(tl!("PhotoCraft for Android"))
+                                .size(11.5)
+                                .color(t.text_faint),
+                        );
+                        ui.add_space(6.0);
+                    });
+            },
+        );
     });
 
     if modal.should_close() && !just_opened {
@@ -954,7 +963,7 @@ fn menu_sheet(app: &mut PhotocraftApp, ctx: &egui::Context, t: &Tokens) {
 
 fn new_sheet(app: &mut PhotocraftApp, ctx: &egui::Context, t: &Tokens) {
     let width = (ctx.content_rect().width() - 32.0).clamp(260.0, 460.0);
-    let max_h = (ctx.content_rect().height() - 80.0).max(300.0);
+    let form_h = (ctx.viewport_rect().height() * 0.45).clamp(220.0, 430.0);
     let draft_id = egui::Id::new(NEW_ID).with("draft");
     let mut draft = ctx
         .data(|d| d.get_temp::<NewDraft>(draft_id))
@@ -988,91 +997,100 @@ fn new_sheet(app: &mut PhotocraftApp, ctx: &egui::Context, t: &Tokens) {
         ui.add_space(4.0);
         widgets_hairline(ui, t);
         ui.add_space(4.0);
-        egui::ScrollArea::vertical()
-            .id_salt("mobile-new-scroll")
-            .max_height((max_h - 150.0).max(200.0))
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                ui.label(
-                    RichText::new(tl!("Presets"))
-                        .font(theme::semibold(12.5))
-                        .color(t.text_faint),
-                );
-                ui.add_space(3.0);
-                for row in [
-                    [("Square", 1080u32, 1080u32), ("Landscape", 1920, 1080)],
-                    [("Portrait", 1080, 1920), ("Large square", 2048, 2048)],
-                ] {
-                    ui.horizontal(|ui| {
-                        ui.spacing_mut().item_spacing.x = 6.0;
-                        for (label, w, h) in row {
-                            let selected =
-                                draft.width == w.to_string() && draft.height == h.to_string();
-                            let resp = ui.add_sized(
-                                [(width - 18.0) / 2.0, 42.0],
-                                egui::Button::new(
-                                    RichText::new(format!("{label}\n{w} × {h}")).size(11.5),
-                                )
-                                .selected(selected),
-                            );
-                            if resp.clicked() {
-                                draft.width = w.to_string();
-                                draft.height = h.to_string();
-                            }
-                        }
-                    });
-                    ui.add_space(4.0);
-                }
-                ui.add_space(6.0);
-                ui.label(RichText::new(tl!("Name")).size(12.0).color(t.text_dim));
-                ui.add_sized(
-                    [width, 44.0],
-                    egui::TextEdit::singleline(&mut draft.name).font(FontId::proportional(16.0)),
-                );
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 8.0;
-                    for (label, value) in [
-                        (tl!("Width"), &mut draft.width),
-                        (tl!("Height"), &mut draft.height),
-                    ] {
-                        ui.vertical(|ui| {
-                            ui.set_width((width - 8.0) / 2.0);
-                            ui.label(RichText::new(label).size(12.0).color(t.text_dim));
-                            ui.add_sized(
-                                [ui.available_width(), 44.0],
-                                egui::TextEdit::singleline(value).font(FontId::proportional(16.0)),
-                            );
-                        });
-                    }
-                });
-                ui.label(RichText::new(tl!("Pixels")).size(11.0).color(t.text_faint));
-                ui.add_space(8.0);
-                ui.label(
-                    RichText::new(tl!("Background"))
-                        .size(12.0)
-                        .color(t.text_dim),
-                );
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 6.0;
-                    for (label, value) in [
-                        ("White", "white"),
-                        ("Transparent", "transparent"),
-                        ("Black", "black"),
-                    ] {
-                        let selected = draft.background == value;
-                        let resp = ui.add_sized(
-                            [(width - 12.0) / 3.0, 42.0],
-                            egui::Button::new(RichText::new(tl!(label)).size(12.0))
-                                .selected(selected),
+        ui.allocate_ui_with_layout(
+            vec2(width, form_h),
+            egui::Layout::top_down(egui::Align::Min),
+            |ui| {
+                ui.set_width(width);
+                egui::ScrollArea::vertical()
+                    .id_salt("mobile-new-scroll")
+                    .max_height(form_h)
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        ui.label(
+                            RichText::new(tl!("Presets"))
+                                .font(theme::semibold(12.5))
+                                .color(t.text_faint),
                         );
-                        if resp.clicked() {
-                            draft.background = value.to_string();
+                        ui.add_space(3.0);
+                        for row in [
+                            [("Square", 1080u32, 1080u32), ("Landscape", 1920, 1080)],
+                            [("Portrait", 1080, 1920), ("Large square", 2048, 2048)],
+                        ] {
+                            ui.horizontal(|ui| {
+                                ui.spacing_mut().item_spacing.x = 6.0;
+                                for (label, w, h) in row {
+                                    let selected = draft.width == w.to_string()
+                                        && draft.height == h.to_string();
+                                    let resp = ui.add_sized(
+                                        [(width - 18.0) / 2.0, 42.0],
+                                        egui::Button::new(
+                                            RichText::new(format!("{label}\n{w} × {h}")).size(11.5),
+                                        )
+                                        .selected(selected),
+                                    );
+                                    if resp.clicked() {
+                                        draft.width = w.to_string();
+                                        draft.height = h.to_string();
+                                    }
+                                }
+                            });
+                            ui.add_space(4.0);
                         }
-                    }
-                });
-                ui.add_space(10.0);
-            });
+                        ui.add_space(6.0);
+                        ui.label(RichText::new(tl!("Name")).size(12.0).color(t.text_dim));
+                        ui.add_sized(
+                            [width, 44.0],
+                            egui::TextEdit::singleline(&mut draft.name)
+                                .font(FontId::proportional(16.0)),
+                        );
+                        ui.add_space(8.0);
+                        ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing.x = 8.0;
+                            for (label, value) in [
+                                (tl!("Width"), &mut draft.width),
+                                (tl!("Height"), &mut draft.height),
+                            ] {
+                                ui.vertical(|ui| {
+                                    ui.set_width((width - 8.0) / 2.0);
+                                    ui.label(RichText::new(label).size(12.0).color(t.text_dim));
+                                    ui.add_sized(
+                                        [ui.available_width(), 44.0],
+                                        egui::TextEdit::singleline(value)
+                                            .font(FontId::proportional(16.0)),
+                                    );
+                                });
+                            }
+                        });
+                        ui.label(RichText::new(tl!("Pixels")).size(11.0).color(t.text_faint));
+                        ui.add_space(8.0);
+                        ui.label(
+                            RichText::new(tl!("Background"))
+                                .size(12.0)
+                                .color(t.text_dim),
+                        );
+                        ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing.x = 6.0;
+                            for (label, value) in [
+                                ("White", "white"),
+                                ("Transparent", "transparent"),
+                                ("Black", "black"),
+                            ] {
+                                let selected = draft.background == value;
+                                let resp = ui.add_sized(
+                                    [(width - 12.0) / 3.0, 42.0],
+                                    egui::Button::new(RichText::new(tl!(label)).size(12.0))
+                                        .selected(selected),
+                                );
+                                if resp.clicked() {
+                                    draft.background = value.to_string();
+                                }
+                            }
+                        });
+                        ui.add_space(10.0);
+                    });
+            },
+        );
         ui.add_space(4.0);
         let create_button = ui.add_enabled(
             valid,
@@ -1127,7 +1145,7 @@ fn new_sheet(app: &mut PhotocraftApp, ctx: &egui::Context, t: &Tokens) {
 
 fn tools_sheet(app: &mut PhotocraftApp, ctx: &egui::Context, t: &Tokens) {
     let width = (ctx.content_rect().width() - 32.0).clamp(260.0, 520.0);
-    let max_h = (ctx.content_rect().height() - 80.0).max(300.0);
+    let scroll_h = (ctx.viewport_rect().height() - 120.0).clamp(200.0, 760.0);
     let mut close = false;
     let mut chosen: Option<Tool> = None;
     let cell_w = ((width - 2.0 * 6.0) / 3.0).floor();
@@ -1150,35 +1168,44 @@ fn tools_sheet(app: &mut PhotocraftApp, ctx: &egui::Context, t: &Tokens) {
         ui.add_space(4.0);
         widgets_hairline(ui, t);
         ui.add_space(4.0);
-        egui::ScrollArea::vertical()
-            .id_salt("mobile-tools-scroll")
-            .max_height((max_h - 80.0).max(200.0))
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                for (title, tools) in TOOL_GROUPS {
-                    ui.add_space(8.0);
-                    ui.label(
-                        RichText::new(tl!(*title))
-                            .font(theme::semibold(12.5))
-                            .color(t.text_faint),
-                    );
-                    ui.add_space(2.0);
-                    egui::Grid::new(("mobile-tool-grid", title))
-                        .num_columns(3)
-                        .spacing([6.0, 6.0])
-                        .show(ui, |ui| {
-                            for (i, &tool) in tools.iter().enumerate() {
-                                if tool_cell(ui, tool, app.ui.tool == tool, cell_w, t).clicked() {
-                                    chosen = Some(tool);
-                                }
-                                if i % 3 == 2 {
-                                    ui.end_row();
-                                }
-                            }
-                        });
-                }
-                ui.add_space(12.0);
-            });
+        ui.allocate_ui_with_layout(
+            vec2(width, scroll_h),
+            egui::Layout::top_down(egui::Align::Min),
+            |ui| {
+                ui.set_width(width);
+                egui::ScrollArea::vertical()
+                    .id_salt("mobile-tools-scroll")
+                    .max_height(scroll_h)
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        for (title, tools) in TOOL_GROUPS {
+                            ui.add_space(8.0);
+                            ui.label(
+                                RichText::new(tl!(*title))
+                                    .font(theme::semibold(12.5))
+                                    .color(t.text_faint),
+                            );
+                            ui.add_space(2.0);
+                            egui::Grid::new(("mobile-tool-grid", title))
+                                .num_columns(3)
+                                .spacing([6.0, 6.0])
+                                .show(ui, |ui| {
+                                    for (i, &tool) in tools.iter().enumerate() {
+                                        if tool_cell(ui, tool, app.ui.tool == tool, cell_w, t)
+                                            .clicked()
+                                        {
+                                            chosen = Some(tool);
+                                        }
+                                        if i % 3 == 2 {
+                                            ui.end_row();
+                                        }
+                                    }
+                                });
+                        }
+                        ui.add_space(12.0);
+                    });
+            },
+        );
     });
 
     if modal.should_close() && !just_opened {
