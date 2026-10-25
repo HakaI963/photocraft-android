@@ -56,10 +56,38 @@ jobs:
             sleep 45
             adb shell screencap -p /sdcard/photocraft-195.png || true
             adb pull /sdcard/photocraft-195.png . || true
-            # Welcome screen's Open... button on a 1080x2400 Pixel 6 at the default
-            # Android UI scale. Verifies that rfd's web file dialog reaches Android.
-            adb shell input tap 513 1215 || true
-            sleep 6
+            # Touch chrome on a 1080x2400 Pixel 6: the hamburger is at the top-left.
+            adb shell input tap 85 134 || true
+            sleep 2
+            adb shell screencap -p /sdcard/photocraft-menu.png || true
+            adb pull /sdcard/photocraft-menu.png . || true
+            # New is the first quick action in the command sheet.
+            adb shell input tap 160 350 || true
+            sleep 2
+            adb shell screencap -p /sdcard/photocraft-new.png || true
+            adb pull /sdcard/photocraft-new.png . || true
+            # Create the default 1920x1080 document from the mobile New sheet.
+            adb shell input tap 538 1660 || true
+            sleep 15
+            adb shell screencap -p /sdcard/photocraft-new-document.png || true
+            adb pull /sdcard/photocraft-new-document.png . || true
+            # The Panels button at the top-right opens the Layers sheet.
+            adb shell input tap 999 134 || true
+            sleep 3
+            adb shell screencap -p /sdcard/photocraft-panels.png || true
+            adb pull /sdcard/photocraft-panels.png . || true
+            adb shell input tap 999 134 || true
+            sleep 1
+            # Brush on the bottom strip, and the large brush-size stepper above it.
+            adb shell input tap 848 2244 || true
+            sleep 2
+            adb shell screencap -p /sdcard/photocraft-brush.png || true
+            adb pull /sdcard/photocraft-brush.png . || true
+            # Menu -> Open exercises rfd's web file dialog through Android's picker.
+            adb shell input tap 85 134 || true
+            sleep 2
+            adb shell input tap 413 350 || true
+            sleep 8
             adb shell screencap -p /sdcard/photocraft-picker.png || true
             adb pull /sdcard/photocraft-picker.png . || true
             # The picker's first recent row is one of the screenshots taken above. Selecting it
