@@ -38,7 +38,7 @@ file picker, MediaStore exports and a touch-first layout around that editor:
 | **MediaStore bridge** | The web build saves by creating a `blob:` download. A small JS bridge streams that blob to `Downloads/PhotoCraft/` in base64 chunks. No storage permission on Android 10+. |
 | **Lifecycle / recovery** | Keeps the screen awake while editing, handles insets and rotation without reloading, reports JS errors, and recovers from a WebView renderer crash instead of closing. |
 | **Touch-first chrome** | `?mobile` swaps the desktop rails for a 54 pt top bar, a large bottom tool strip, a brush-size quick control, and full-width panel/menu sheets. The editor, canvas and commands are still upstream. |
-| **CPU fallback** | Starts with WebGL2 (`?webgl`). If the device's WebGL context cannot start, the bridge reloads once with PhotoCraft's CPU canvas (`?cpu`). |
+| **CPU fallback** | Starts with WebGL2 (`?webgl`). If the WebGL context cannot start, the bridge reloads once with PhotoCraft's CPU canvas (`?cpu`). If the device rejects the GPU compositor's shader pipeline, the editor drops to the CPU canvas in-session without losing the open document. |
 
 Everything that edits pixels runs in the Rust core compiled to WebAssembly. There is **no NDK
 build, no JNI image pipeline, and no second implementation to drift from upstream**.

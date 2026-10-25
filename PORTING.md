@@ -122,7 +122,10 @@ a one-time migration back to 100%. The scale preference is still editable in Pre
 
 The page is loaded with `?webgl&mobile`; wgpu uses the WebGL2 backend, the most widely available
 WebView path. If initialization fails, `android-bridge.js` watches the page's own error text and
-reloads once with `?cpu&mobile` (PhotoCraft's CPU canvas). The bridge sets `touch-action: none`
+reloads once with `?cpu&mobile` (PhotoCraft's CPU canvas). Some WebView GPU stacks start the UI but
+reject the compositor's WGSL pipeline; in that case `canvas.rs` detects the pipeline error, drops
+the GPU canvas and continues on the CPU canvas at once. The open document is not reloaded or
+closed, and the fallback is retried on the next launch. The bridge sets `touch-action: none`
 and disables context menus so browser gestures do not fight the editor; egui receives the pointer
 events. Two-finger pinch/twist reach the upstream canvas gesture code (Enhanced Controls › Enable
 Gestures is on by default), and the Hand/Zoom tools cover one-finger navigation. The upstream web
@@ -172,7 +175,7 @@ There is no local SDK/NDK build by design. After an Actions run:
 - [ ] Rotating the device does not reload the page or lose the document.
 - [ ] Back shows the exit confirmation; external links open the browser.
 - [ ] Airplane mode does not change any of the above.
-- [ ] A device without WebGL2 falls back to the CPU canvas (`?cpu`).
+- [ ] A device without WebGL2, or one that rejects the GPU compositor pipeline, falls back to the CPU canvas without losing the document.
 
 ## Known gaps
 

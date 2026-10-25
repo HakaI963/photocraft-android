@@ -2051,7 +2051,13 @@ fn ensure_gpu(app: &mut PhotocraftApp, ctx: &egui::Context, idx: usize, visible:
     if let Some(e) = &r.fallback
         && e.contains("couldn't build the compositor")
     {
+        crate::background_redraw::cancel(app, id);
         crate::gpu_status::fall_back(app, &photocraft_gpu::Fault::Error(e.clone()));
+        // A shader pipeline that failed to build will not build on Retry. Continue on the CPU
+        // canvas without a modal the user has to dismiss, and repaint once so the egui textures
+        // the CPU canvas just made are uploaded and visible.
+        app.ui.gpu_fallback_notice = None;
+        ctx.request_repaint();
         return false;
     }
     if r.kind != crate::gpu_canvas::REFRESH_DEFERRED {

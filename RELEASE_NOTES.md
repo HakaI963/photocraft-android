@@ -25,7 +25,7 @@ Requires Android 10 or newer. Fully offline; no account or network connection is
 - PSD / PSB / PSDT read and write, plus PNG, JPEG, TIFF, WebP, OpenRaster, Krita, XCF, Affinity
 - Camera RAW and HEIC import
 - Exports are saved to **Downloads/PhotoCraft/**
-- WebGL2 by default, automatic CPU fallback if the GPU path cannot start
+- WebGL2 by default, with automatic CPU fallback if the GPU path cannot start or the device rejects the GPU compositor pipeline
 
 This is an unofficial port of [storytold/photocraft](https://github.com/storytold/photocraft)
 (PhotoCraft 0.14.0, commit `ff47388`), MIT / Apache-2.0. It is built entirely in GitHub Actions

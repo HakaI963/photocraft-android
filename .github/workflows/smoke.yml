@@ -91,7 +91,7 @@ jobs:
             adb shell screencap -p /sdcard/photocraft-menu.png || true
             adb pull /sdcard/photocraft-menu.png . || true
             adb shell input tap 413 365 || true
-            sleep 8
+            sleep 20
             adb shell screencap -p /sdcard/photocraft-picker.png || true
             adb pull /sdcard/photocraft-picker.png . || true
             # The picker's first recent row is one of the screenshots taken above. Selecting it
