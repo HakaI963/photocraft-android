@@ -47,8 +47,16 @@ jobs:
           script: |
             set -x
             adb install -r apk/*.apk || true
+            # The AOSP launcher occasionally ANRs on a cold headless boot; it is not our app,
+            # but its dialog would swallow every tap. Keep it out of the way.
+            adb shell am force-stop com.google.android.apps.nexuslauncher || true
             adb shell am start -W -n io.github.hakai963.photocraft/.MainActivity || true
             sleep 150
+            adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true
+            if adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q "isn.t responding"; then
+              adb shell input tap 540 1550 || true
+              sleep 3
+            fi
             adb shell dumpsys activity activities > dumpsys.txt || true
             grep -E 'mResumedActivity|topResumedActivity' dumpsys.txt || true
             adb shell screencap -p /sdcard/photocraft-150.png || true
