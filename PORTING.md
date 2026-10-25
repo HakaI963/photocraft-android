@@ -14,7 +14,7 @@ repository alone, including offline mirrors. To sync:
 git remote add upstream https://github.com/storytold/photocraft.git
 git fetch upstream
 # replace crates/, apps/, xtask/, assets/, contributors/, Cargo.toml, Cargo.lock
-# re-apply the three upstream edits below, then build in Actions
+# re-apply the upstream edits below, then build in Actions
 ```
 
 The port keeps the upstream core and editor, and changes only the shell and the chrome around
@@ -31,6 +31,9 @@ the canvas:
    New Document sheet. Desktop builds never set the flag, so this module draws nothing there.
 5. `crates/ui-egui/src/canvas.rs` — the welcome screen's **New document** button opens the mobile
    New Document sheet instead of the 790 pt desktop dialog.
+6. `crates/ui-egui/src/canvas.rs` — if the GPU compositor's shader pipeline fails to build (some
+   WebGL2 drivers), drop the GPU canvas and continue on the CPU canvas in-session, without a
+   modal or a page reload.
 
 Everything behind those entry points — the engine, document model, canvas, tools, panels, filters
 and dialogs — is upstream code. The bridge and Android shell are port-owned and injected during
