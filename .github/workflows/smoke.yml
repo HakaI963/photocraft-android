@@ -58,12 +58,12 @@ jobs:
             adb pull /sdcard/photocraft-195.png . || true
             # Touch chrome on a 1080x2400 Pixel 6. The welcome screen's New button is the
             # large blue one on the left; it opens the mobile New Document sheet.
-            adb shell input tap 274 1040 || true
+            adb shell input tap 275 1134 || true
             sleep 2
             adb shell screencap -p /sdcard/photocraft-new.png || true
             adb pull /sdcard/photocraft-new.png . || true
             # Create the default 1920x1080 document from the mobile New sheet.
-            adb shell input tap 540 1825 || true
+            adb shell input tap 540 1820 || true
             sleep 15
             adb shell screencap -p /sdcard/photocraft-new-document.png || true
             adb pull /sdcard/photocraft-new-document.png . || true
@@ -85,7 +85,7 @@ jobs:
             sleep 2
             adb shell screencap -p /sdcard/photocraft-menu.png || true
             adb pull /sdcard/photocraft-menu.png . || true
-            adb shell input tap 413 316 || true
+            adb shell input tap 413 365 || true
             sleep 8
             adb shell screencap -p /sdcard/photocraft-picker.png || true
             adb pull /sdcard/photocraft-picker.png . || true
