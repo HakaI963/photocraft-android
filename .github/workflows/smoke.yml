@@ -72,6 +72,20 @@ jobs:
             sleep 15
             adb shell screencap -p /sdcard/photocraft-new-document.png || true
             adb pull /sdcard/photocraft-new-document.png . || true
+            # Drive the brush-size stepper all the way down to 1 px (the - is at 265,2180).
+            for i in $(seq 1 36); do adb shell input tap 265 2180 || true; done
+            sleep 2
+            adb shell screencap -p /sdcard/photocraft-size1.png || true
+            adb pull /sdcard/photocraft-size1.png . || true
+            # One tap, then a one-finger drag, at the smallest brush.
+            adb shell input tap 540 1200 || true
+            sleep 2
+            adb shell screencap -p /sdcard/photocraft-dot.png || true
+            adb pull /sdcard/photocraft-dot.png . || true
+            adb shell input swipe 300 1300 700 1300 800 || true
+            sleep 2
+            adb shell screencap -p /sdcard/photocraft-small-stroke.png || true
+            adb pull /sdcard/photocraft-small-stroke.png . || true
             # Paint a short zigzag on the white canvas: pointer input and the CPU compositor.
             adb shell input swipe 260 1150 360 1400 500 || true
             adb shell input swipe 360 1400 460 1050 500 || true
